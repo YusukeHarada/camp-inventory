@@ -99,7 +99,7 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
           type="number"
           placeholder="例: 3"
           error={errors.stock?.message}
-          {...register('stock', { valueAsNumber: true })}
+          {...register('stock', { setValueAs: (v: string) => v === '' || v === undefined ? undefined : parseInt(v, 10) })}
         />
       )}
       <Input

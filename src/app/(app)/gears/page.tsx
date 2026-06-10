@@ -19,36 +19,47 @@ export default function GearsPage() {
   const [editingGear, setEditingGear] = useState<Gear | null>(null)
   const [deletingGear, setDeletingGear] = useState<Gear | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const filteredGears = selectedCategory
     ? gears.filter((g) => g.category === selectedCategory)
     : gears
 
   const handleAdd = async (data: GearFormData) => {
-    await addGear({
-      name: data.name,
-      category: data.category as GearCategory,
-      isRequired: data.isRequired,
-      isConsumable: data.isConsumable,
-      stock: data.isConsumable && data.stock !== undefined ? data.stock : undefined,
-      memo: data.memo,
-      imageUrl: data.imageUrl,
-    })
-    setShowAddModal(false)
+    try {
+      setFormError(null)
+      await addGear({
+        name: data.name,
+        category: data.category as GearCategory,
+        isRequired: data.isRequired,
+        isConsumable: data.isConsumable,
+        stock: data.isConsumable && data.stock !== undefined ? data.stock : undefined,
+        memo: data.memo || undefined,
+        imageUrl: data.imageUrl || undefined,
+      })
+      setShowAddModal(false)
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '登録に失敗しました')
+    }
   }
 
   const handleEdit = async (data: GearFormData) => {
     if (!editingGear) return
-    await updateGear(editingGear.id, {
-      name: data.name,
-      category: data.category as GearCategory,
-      isRequired: data.isRequired,
-      isConsumable: data.isConsumable,
-      stock: data.isConsumable && data.stock !== undefined ? data.stock : undefined,
-      memo: data.memo,
-      imageUrl: data.imageUrl,
-    })
-    setEditingGear(null)
+    try {
+      setFormError(null)
+      await updateGear(editingGear.id, {
+        name: data.name,
+        category: data.category as GearCategory,
+        isRequired: data.isRequired,
+        isConsumable: data.isConsumable,
+        stock: data.isConsumable && data.stock !== undefined ? data.stock : undefined,
+        memo: data.memo || undefined,
+        imageUrl: data.imageUrl || undefined,
+      })
+      setEditingGear(null)
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '更新に失敗しました')
+    }
   }
 
   const handleDelete = async () => {
@@ -105,30 +116,42 @@ export default function GearsPage() {
         </div>
       )}
 
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="ギアを追加">
-        <GearForm onSubmit={handleAdd} onCancel={() => setShowAddModal(false)} />
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setFormError(null) }} title="ギアを追加">
+        {formError && (
+          <p className="mb-3 rounded-md bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {formError}
+          </p>
+        )}
+        <GearForm onSubmit={handleAdd} onCancel={() => { setShowAddModal(false); setFormError(null) }} />
       </Modal>
 
       <Modal
         open={editingGear !== null}
-        onClose={() => setEditingGear(null)}
+        onClose={() => { setEditingGear(null); setFormError(null) }}
         title="ギアを編集"
       >
         {editingGear && (
-          <GearForm
-            defaultValues={{
-              name: editingGear.name,
-              category: editingGear.category,
-              isRequired: editingGear.isRequired,
-              isConsumable: editingGear.isConsumable,
-              stock: editingGear.stock,
-              memo: editingGear.memo,
-              imageUrl: editingGear.imageUrl,
-            }}
-            onSubmit={handleEdit}
-            onCancel={() => setEditingGear(null)}
-            submitLabel="更新"
-          />
+          <>
+            {formError && (
+              <p className="mb-3 rounded-md bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                {formError}
+              </p>
+            )}
+            <GearForm
+              defaultValues={{
+                name: editingGear.name,
+                category: editingGear.category,
+                isRequired: editingGear.isRequired,
+                isConsumable: editingGear.isConsumable,
+                stock: editingGear.stock,
+                memo: editingGear.memo,
+                imageUrl: editingGear.imageUrl,
+              }}
+              onSubmit={handleEdit}
+              onCancel={() => { setEditingGear(null); setFormError(null) }}
+              submitLabel="更新"
+            />
+          </>
         )}
       </Modal>
 
