@@ -32,6 +32,7 @@ export default function TripDetailPage({ params }: Props) {
     addTripGear,
     toggleCheck,
     updateConsumptionLevel,
+    updateQuantity,
     removeTripGear,
     addRequiredGears,
   } = useTripGears(tripId)
@@ -119,6 +120,7 @@ export default function TripDetailPage({ params }: Props) {
                     onToggle={toggleCheck}
                     onRemove={removeTripGear}
                     onUpdateConsumption={updateConsumptionLevel}
+                    onUpdateQuantity={updateQuantity}
                   />
                 )
               })}

@@ -50,12 +50,22 @@ export async function addTripGear(
     tripId,
     gearId,
     checked: false,
+    quantity: 1,
+    quantityUsed: 0,
   })
   return ref.id
 }
 
 export async function updateTripGearChecked(id: string, checked: boolean): Promise<void> {
   await updateDoc(doc(db, COLLECTION, id), { checked })
+}
+
+export async function updateTripGearQuantity(
+  id: string,
+  quantity: number,
+  quantityUsed: number
+): Promise<void> {
+  await updateDoc(doc(db, COLLECTION, id), { quantity, quantityUsed })
 }
 
 export async function updateTripGearConsumption(

@@ -45,19 +45,35 @@ const CONSUMPTION_SCORE: Record<ConsumptionLevel, number> = {
   all: 4,
 }
 
+// 1回のキャンプでの消費量を 0〜1 の比率で算出（使い切り数 + 残りの消費感を合算）
+function calcConsumptionRatio(tg: TripGear): number | null {
+  const quantity = tg.quantity ?? 1
+  const quantityUsed = tg.quantityUsed ?? 0
+  const remainderScore = tg.consumptionLevel !== undefined
+    ? CONSUMPTION_SCORE[tg.consumptionLevel] / 4
+    : null
+
+  if (quantityUsed === 0 && remainderScore === null) return null
+
+  const usedRatio = quantityUsed / quantity
+  const remainderContribution = remainderScore !== null ? (1 / quantity) * remainderScore : 0
+  return Math.min(1, usedRatio + remainderContribution)
+}
+
 export function calcConsumptionSuggestion(
   gearId: string,
   allTripGears: TripGear[]
 ): string | null {
-  const levels = allTripGears
-    .filter((tg) => tg.gearId === gearId && tg.consumptionLevel !== undefined)
-    .map((tg) => tg.consumptionLevel!)
+  const ratios = allTripGears
+    .filter((tg) => tg.gearId === gearId)
+    .map(calcConsumptionRatio)
+    .filter((r): r is number => r !== null)
 
-  if (levels.length === 0) return null
+  if (ratios.length === 0) return null
 
-  const avg = levels.reduce((sum, l) => sum + CONSUMPTION_SCORE[l], 0) / levels.length
+  const avg = ratios.reduce((sum, r) => sum + r, 0) / ratios.length
 
-  if (avg >= 3) return '多めに持参推奨'
-  if (avg >= 2) return '通常量でOK'
+  if (avg >= 0.75) return '多めに持参推奨'
+  if (avg >= 0.4) return '通常量でOK'
   return '少量で十分'
 }
