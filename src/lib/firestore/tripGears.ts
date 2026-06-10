@@ -91,8 +91,12 @@ export async function deleteTripGearsByTripId(tripId: string, userId: string): P
   await batch.commit()
 }
 
-export async function deleteTripGearsByGearId(gearId: string): Promise<void> {
-  const q = query(collection(db, COLLECTION), where('gearId', '==', gearId))
+export async function deleteTripGearsByGearId(gearId: string, userId: string): Promise<void> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('userId', '==', userId),
+    where('gearId', '==', gearId)
+  )
   const snap = await getDocs(q)
   const batch = writeBatch(db)
   snap.docs.forEach((d) => batch.delete(d.ref))
