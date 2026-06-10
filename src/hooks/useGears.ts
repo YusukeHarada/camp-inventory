@@ -50,11 +50,12 @@ export function useGears() {
 
   const deleteGear = useCallback(
     async (id: string) => {
+      if (!user) return
       await deleteGearFS(id)
-      await deleteTripGearsByGearId(id)
+      await deleteTripGearsByGearId(id, user.uid)
       await load()
     },
-    [load]
+    [user, load]
   )
 
   return { gears, loading, addGear, updateGear, deleteGear, reload: load }
