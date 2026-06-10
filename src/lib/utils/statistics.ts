@@ -1,4 +1,4 @@
-import type { Gear, TripGear } from '@/types'
+import type { Gear, TripGear, ConsumptionLevel } from '@/types'
 
 export type GearUsage = {
   gear: Gear
@@ -36,4 +36,28 @@ export function calcUsageByCategory(
 
 export function calcTotalUsage(tripGears: TripGear[]): number {
   return tripGears.length
+}
+
+const CONSUMPTION_SCORE: Record<ConsumptionLevel, number> = {
+  little: 1,
+  half: 2,
+  most: 3,
+  all: 4,
+}
+
+export function calcConsumptionSuggestion(
+  gearId: string,
+  allTripGears: TripGear[]
+): string | null {
+  const levels = allTripGears
+    .filter((tg) => tg.gearId === gearId && tg.consumptionLevel !== undefined)
+    .map((tg) => tg.consumptionLevel!)
+
+  if (levels.length === 0) return null
+
+  const avg = levels.reduce((sum, l) => sum + CONSUMPTION_SCORE[l], 0) / levels.length
+
+  if (avg >= 3) return '多めに持参推奨'
+  if (avg >= 2) return '通常量でOK'
+  return '少量で十分'
 }

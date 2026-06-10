@@ -19,6 +19,7 @@ export function GearCard({ gear, usageCount, onEdit, onDelete }: Props) {
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{gear.name}</p>
           {gear.isRequired && <Badge variant="warning">必須</Badge>}
+          {gear.isConsumable && <Badge variant="primary">消耗品</Badge>}
         </div>
         <div className="mt-1 flex items-center gap-2 flex-wrap">
           <Badge variant="secondary">{GEAR_CATEGORY_LABELS[gear.category]}</Badge>

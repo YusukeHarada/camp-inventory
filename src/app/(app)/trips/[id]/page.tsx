@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { PageLoading } from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/Badge'
 import { GEAR_CATEGORY_LABELS } from '@/lib/constants/categories'
+import { calcConsumptionSuggestion } from '@/lib/utils/statistics'
 import type { Gear } from '@/types'
 
 type Props = {
@@ -23,11 +24,13 @@ export default function TripDetailPage({ params }: Props) {
   const { id: tripId } = use(params)
   const {
     tripGears,
+    allTripGears,
     allGears,
     unplannedGears,
     loading,
     addTripGear,
     toggleCheck,
+    updateConsumptionLevel,
     removeTripGear,
     addRequiredGears,
   } = useTripGears(tripId)
@@ -108,6 +111,7 @@ export default function TripDetailPage({ params }: Props) {
                     gear={gear}
                     onToggle={toggleCheck}
                     onRemove={removeTripGear}
+                    onUpdateConsumption={updateConsumptionLevel}
                   />
                 )
               })}
@@ -127,7 +131,12 @@ export default function TripDetailPage({ params }: Props) {
           ) : (
             <div className="flex flex-col gap-2">
               {unplannedGears.map((gear) => (
-                <UnplannedGearRow key={gear.id} gear={gear} onAdd={addTripGear} />
+                <UnplannedGearRow
+                  key={gear.id}
+                  gear={gear}
+                  onAdd={addTripGear}
+                  suggestion={gear.isConsumable ? calcConsumptionSuggestion(gear.id, allTripGears) : null}
+                />
               ))}
             </div>
           )}
@@ -162,7 +171,15 @@ export default function TripDetailPage({ params }: Props) {
   )
 }
 
-function UnplannedGearRow({ gear, onAdd }: { gear: Gear; onAdd: (gearId: string) => Promise<void> }) {
+function UnplannedGearRow({
+  gear,
+  onAdd,
+  suggestion,
+}: {
+  gear: Gear
+  onAdd: (gearId: string) => Promise<void>
+  suggestion?: string | null
+}) {
   const [isAdding, setIsAdding] = useState(false)
   const handleAdd = async () => {
     setIsAdding(true)
@@ -180,6 +197,9 @@ function UnplannedGearRow({ gear, onAdd }: { gear: Gear; onAdd: (gearId: string)
           <Badge variant="secondary">{GEAR_CATEGORY_LABELS[gear.category]}</Badge>
           {gear.isRequired && <Badge variant="warning">必須</Badge>}
         </div>
+        {suggestion && (
+          <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">過去の傾向: {suggestion}</p>
+        )}
       </div>
       <Button size="sm" onClick={handleAdd} loading={isAdding}>
         <Plus size={14} />

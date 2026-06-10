@@ -4,16 +4,19 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getTripGears,
+  getTripGearsByUserId,
   addTripGear as addTripGearFS,
   updateTripGearChecked,
+  updateTripGearConsumption,
   deleteTripGear as deleteTripGearFS,
 } from '@/lib/firestore/tripGears'
 import { getGears } from '@/lib/firestore/gears'
-import type { TripGear, Gear } from '@/types'
+import type { TripGear, Gear, ConsumptionLevel } from '@/types'
 
 export function useTripGears(tripId: string) {
   const { user } = useAuth()
   const [tripGears, setTripGears] = useState<TripGear[]>([])
+  const [allTripGears, setAllTripGears] = useState<TripGear[]>([])
   const [allGears, setAllGears] = useState<Gear[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,9 +24,14 @@ export function useTripGears(tripId: string) {
     if (!user) return
     setLoading(true)
     try {
-      const [tgs, gs] = await Promise.all([getTripGears(tripId), getGears(user.uid)])
+      const [tgs, gs, allTgs] = await Promise.all([
+        getTripGears(tripId),
+        getGears(user.uid),
+        getTripGearsByUserId(user.uid),
+      ])
       setTripGears(tgs)
       setAllGears(gs)
+      setAllTripGears(allTgs)
     } finally {
       setLoading(false)
     }
@@ -52,6 +60,18 @@ export function useTripGears(tripId: string) {
     []
   )
 
+  const updateConsumptionLevel = useCallback(
+    async (tripGearId: string, level: ConsumptionLevel | null) => {
+      setTripGears((prev) =>
+        prev.map((tg) =>
+          tg.id === tripGearId ? { ...tg, consumptionLevel: level ?? undefined } : tg
+        )
+      )
+      await updateTripGearConsumption(tripGearId, level)
+    },
+    []
+  )
+
   const removeTripGear = useCallback(
     async (tripGearId: string) => {
       await deleteTripGearFS(tripGearId)
@@ -72,11 +92,13 @@ export function useTripGears(tripId: string) {
 
   return {
     tripGears,
+    allTripGears,
     allGears,
     unplannedGears,
     loading,
     addTripGear,
     toggleCheck,
+    updateConsumptionLevel,
     removeTripGear,
     addRequiredGears,
     reload: load,
