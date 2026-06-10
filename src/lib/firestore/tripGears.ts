@@ -14,8 +14,12 @@ import type { TripGear } from '@/types'
 
 const COLLECTION = 'tripGears'
 
-export async function getTripGears(tripId: string): Promise<TripGear[]> {
-  const q = query(collection(db, COLLECTION), where('tripId', '==', tripId))
+export async function getTripGears(tripId: string, userId: string): Promise<TripGear[]> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('userId', '==', userId),
+    where('tripId', '==', tripId)
+  )
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as TripGear))
 }
@@ -64,8 +68,12 @@ export async function deleteTripGear(id: string): Promise<void> {
   await deleteDoc(doc(db, COLLECTION, id))
 }
 
-export async function deleteTripGearsByTripId(tripId: string): Promise<void> {
-  const q = query(collection(db, COLLECTION), where('tripId', '==', tripId))
+export async function deleteTripGearsByTripId(tripId: string, userId: string): Promise<void> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('userId', '==', userId),
+    where('tripId', '==', tripId)
+  )
   const snap = await getDocs(q)
   const batch = writeBatch(db)
   snap.docs.forEach((d) => batch.delete(d.ref))

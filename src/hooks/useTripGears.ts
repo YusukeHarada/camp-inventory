@@ -19,19 +19,24 @@ export function useTripGears(tripId: string) {
   const [allTripGears, setAllTripGears] = useState<TripGear[]>([])
   const [allGears, setAllGears] = useState<Gear[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
     setLoading(true)
+    setError(null)
     try {
       const [tgs, gs, allTgs] = await Promise.all([
-        getTripGears(tripId),
+        getTripGears(tripId, user.uid),
         getGears(user.uid),
         getTripGearsByUserId(user.uid),
       ])
       setTripGears(tgs)
       setAllGears(gs)
       setAllTripGears(allTgs)
+    } catch (e) {
+      console.error('useTripGears load error:', e)
+      setError(e instanceof Error ? e.message : 'データの読み込みに失敗しました')
     } finally {
       setLoading(false)
     }
@@ -96,6 +101,7 @@ export function useTripGears(tripId: string) {
     allGears,
     unplannedGears,
     loading,
+    error,
     addTripGear,
     toggleCheck,
     updateConsumptionLevel,

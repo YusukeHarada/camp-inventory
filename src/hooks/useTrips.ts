@@ -50,11 +50,12 @@ export function useTrips() {
 
   const deleteTrip = useCallback(
     async (id: string) => {
+      if (!user) return
       await deleteTripFS(id)
-      await deleteTripGearsByTripId(id)
+      await deleteTripGearsByTripId(id, user.uid)
       await load()
     },
-    [load]
+    [user, load]
   )
 
   return { trips, loading, addTrip, updateTrip, deleteTrip, reload: load }

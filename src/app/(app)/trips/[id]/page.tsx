@@ -28,6 +28,7 @@ export default function TripDetailPage({ params }: Props) {
     allGears,
     unplannedGears,
     loading,
+    error,
     addTripGear,
     toggleCheck,
     updateConsumptionLevel,
@@ -52,6 +53,12 @@ export default function TripDetailPage({ params }: Props) {
   }
 
   if (loading) return <PageLoading />
+  if (error) return (
+    <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4 text-sm text-red-700 dark:text-red-300">
+      <p className="font-medium">データの読み込みに失敗しました</p>
+      <p className="mt-1 text-xs opacity-75">{error}</p>
+    </div>
+  )
 
   return (
     <div className="flex flex-col gap-4">
