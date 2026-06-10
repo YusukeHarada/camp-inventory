@@ -66,38 +66,29 @@ src/
 
 ```
 gears/{gearId}
-  userId, name, category, isRequired, memo, imageUrl, createdAt
+  userId, name, category, isRequired, isConsumable, memo, imageUrl, createdAt
 
 trips/{tripId}
   userId, name, date, location, memo, createdAt
 
 tripGears/{tripGearId}
-  userId, tripId, gearId, checked
+  userId, tripId, gearId, checked, consumptionLevel?
 ```
 
 ### 型定義
 
 ```ts
-// CAMP HACK カテゴリ体系を参考に定義
-// 参考: https://camphack.nap-camp.com/categories
 type GearCategory =
-  | 'tent-tarp'         // テント・タープ
-  | 'bedding'           // 寝具
-  | 'furniture'         // ファニチャー（チェア・テーブル）
-  | 'cookware'          // 調理器具
-  | 'tableware'         // テーブルウェア・食器
-  | 'fuel-ignition'     // 燃料・着火用具
-  | 'light-lantern'     // ランタン・ライト
-  | 'coolerbox'         // クーラーボックス・保冷用具
-  | 'storage'           // 収納ボックス・収納ラック
-  | 'carry-cart'        // カート・キャリー
-  | 'battery'           // 電源・バッテリー
-  | 'air-conditioning'  // 冷暖房器具
-  | 'field-gear'        // フィールドギア（ナイフ・斧・ロープなど）
-  | 'apparel'           // ウェア・ファッション全般
-  | 'bag'               // バッグ・リュック
-  | 'shoes'             // シューズ・靴
-  | 'other'             // その他
+  | 'tent'        // テント・タープ・寝具
+  | 'furniture'   // チェア・テーブル・収納・キャリー・冷暖房・バッグ
+  | 'kitchen'     // 調理器具・食器・燃料・クーラーボックス
+  | 'lighting'    // ランタン・ライト・電源・バッテリー
+  | 'tools'       // フィールドギア
+  | 'apparel'     // ウェア・シューズ
+  | 'other'       // その他
+
+// 消耗品の使用感覚（キャンプ後に記録）
+type ConsumptionLevel = 'little' | 'half' | 'most' | 'all'
 
 type Gear = {
   id: string
@@ -105,6 +96,7 @@ type Gear = {
   name: string
   category: GearCategory
   isRequired: boolean      // 必須ギアフラグ
+  isConsumable: boolean    // 消耗品フラグ（ガス・電池など）
   memo?: string
   imageUrl?: string
   createdAt: Timestamp
@@ -125,7 +117,8 @@ type TripGear = {
   userId: string
   tripId: string
   gearId: string
-  checked: boolean         // チェックリスト用
+  checked: boolean              // チェックリスト用
+  consumptionLevel?: ConsumptionLevel  // 消耗品の使用量（任意・キャンプ後に記録）
 }
 ```
 
@@ -151,6 +144,8 @@ type TripGear = {
 - `signInWithPopup` のみ使用
 - `signInWithRedirect` は使用禁止（iOS Safari の ITP で sessionStorage が消去されるため）
 - `onAuthStateChanged` でローディング状態を管理
+- **`initializeAuth` を使う場合は `browserPopupRedirectResolver` を必ず渡すこと**
+  `getAuth` はデフォルトで含めるが `initializeAuth` は含めないため、省略すると `signInWithPopup` が `auth/argument-error` で失敗する
 
 ### テスト
 
