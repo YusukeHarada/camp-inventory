@@ -1,5 +1,10 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import {
+  getAuth,
+  initializeAuth,
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+} from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -13,5 +18,19 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 
-export const auth = getAuth(app)
+// sessionStorage を避けて IndexedDB → localStorage の順で fallback する。
+// これにより iOS Safari の ITP や Chrome のストレージ分離による
+// "missing initial state" エラーを回避する。
+function createAuth() {
+  try {
+    return initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+    })
+  } catch {
+    // すでに初期化済みの場合は getAuth で取得
+    return getAuth(app)
+  }
+}
+
+export const auth = createAuth()
 export const db = getFirestore(app)
