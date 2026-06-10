@@ -32,7 +32,7 @@ export default function LoginPage() {
       } else if (code === 'auth/cancelled-popup-request') {
         // 複数回クリックによるキャンセルは無視
       } else {
-        setError('ログインに失敗しました。Firebase Console でこのドメインが「承認済みドメイン」に登録されているか確認してください。')
+        setError(`ログインに失敗しました（${code || '不明なエラー'}）。`)
       }
     } finally {
       setIsSigningIn(false)
