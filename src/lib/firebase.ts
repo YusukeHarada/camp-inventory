@@ -4,6 +4,7 @@ import {
   initializeAuth,
   browserLocalPersistence,
   indexedDBLocalPersistence,
+  browserPopupRedirectResolver,
 } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
@@ -25,6 +26,7 @@ function createAuth() {
   try {
     return initializeAuth(app, {
       persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+      popupRedirectResolver: browserPopupRedirectResolver,
     })
   } catch {
     // すでに初期化済みの場合は getAuth で取得
