@@ -32,7 +32,7 @@ export function useTrips() {
   }, [load])
 
   const addTrip = useCallback(
-    async (data: Omit<CampTrip, 'id' | 'userId' | 'createdAt'>) => {
+    async (data: Omit<CampTrip, 'id' | 'userId' | 'createdAt' | 'status'>) => {
       if (!user) return
       await addTripFS(user.uid, data)
       await load()

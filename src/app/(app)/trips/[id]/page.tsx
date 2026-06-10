@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, CheckSquare, ClipboardList, Star } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ClipboardList, Star, FlagTriangleRight } from 'lucide-react'
 import { useTripGears } from '@/hooks/useTripGears'
 import { TripGearItem } from '@/components/trips/TripGearItem'
 import { Button } from '@/components/ui/Button'
@@ -27,6 +27,7 @@ export default function TripDetailPage({ params }: Props) {
     allTripGears,
     allGears,
     unplannedGears,
+    tripStatus,
     loading,
     error,
     addTripGear,
@@ -35,11 +36,14 @@ export default function TripDetailPage({ params }: Props) {
     updateQuantity,
     removeTripGear,
     addRequiredGears,
+    completeTrip,
   } = useTripGears(tripId)
 
   const [tab, setTab] = useState<Tab>('checklist')
   const [showGearSelector, setShowGearSelector] = useState(false)
   const [isAddingRequired, setIsAddingRequired] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
 
   const gearMap = new Map(allGears.map((g) => [g.id, g]))
   const checkedCount = tripGears.filter((tg) => tg.checked).length
@@ -50,6 +54,16 @@ export default function TripDetailPage({ params }: Props) {
       await addRequiredGears()
     } finally {
       setIsAddingRequired(false)
+    }
+  }
+
+  const handleCompleteTrip = async () => {
+    setIsCompleting(true)
+    try {
+      await completeTrip()
+      setShowCompleteConfirm(false)
+    } finally {
+      setIsCompleting(false)
     }
   }
 
@@ -77,10 +91,22 @@ export default function TripDetailPage({ params }: Props) {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {checkedCount} / {tripGears.length} 個チェック済み
         </p>
-        <Button size="sm" variant="secondary" onClick={handleAddRequiredGears} loading={isAddingRequired}>
-          <Star size={14} />
-          必須ギアを追加
-        </Button>
+        <div className="flex gap-2">
+          {tripStatus === 'planned' && (
+            <Button size="sm" variant="secondary" onClick={handleAddRequiredGears} loading={isAddingRequired}>
+              <Star size={14} />
+              必須ギアを追加
+            </Button>
+          )}
+          {tripStatus === 'planned' ? (
+            <Button size="sm" onClick={() => setShowCompleteConfirm(true)}>
+              <FlagTriangleRight size={14} />
+              キャンプ終了
+            </Button>
+          ) : (
+            <Badge variant="primary">終了済み</Badge>
+          )}
+        </div>
       </div>
 
       <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -151,6 +177,22 @@ export default function TripDetailPage({ params }: Props) {
           )}
         </>
       )}
+
+      <Modal open={showCompleteConfirm} onClose={() => setShowCompleteConfirm(false)} title="キャンプ終了">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            キャンプを終了しますか？消耗品の消費量が在庫に反映されます。この操作は取り消せません。
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={() => setShowCompleteConfirm(false)} className="flex-1">
+              キャンセル
+            </Button>
+            <Button onClick={handleCompleteTrip} loading={isCompleting} className="flex-1">
+              終了する
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={showGearSelector} onClose={() => setShowGearSelector(false)} title="ギアを選択">
         {unplannedGears.length === 0 ? (

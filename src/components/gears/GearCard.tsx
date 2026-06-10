@@ -20,6 +20,11 @@ export function GearCard({ gear, usageCount, onEdit, onDelete }: Props) {
           <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{gear.name}</p>
           {gear.isRequired && <Badge variant="warning">必須</Badge>}
           {gear.isConsumable && <Badge variant="primary">消耗品</Badge>}
+          {gear.isConsumable && gear.stock !== undefined && (
+            <Badge variant={gear.stock === 0 ? 'danger' : gear.stock <= 2 ? 'warning' : 'secondary'}>
+              在庫 {gear.stock}
+            </Badge>
+          )}
         </div>
         <div className="mt-1 flex items-center gap-2 flex-wrap">
           <Badge variant="secondary">{GEAR_CATEGORY_LABELS[gear.category]}</Badge>

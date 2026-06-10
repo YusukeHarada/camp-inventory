@@ -66,10 +66,10 @@ src/
 
 ```
 gears/{gearId}
-  userId, name, category, isRequired, isConsumable, memo, imageUrl, createdAt
+  userId, name, category, isRequired, isConsumable, stock?, memo, imageUrl, createdAt
 
 trips/{tripId}
-  userId, name, date, location, memo, createdAt
+  userId, name, date, location, memo, status, createdAt
 
 tripGears/{tripGearId}
   userId, tripId, gearId, checked, quantity, quantityUsed, consumptionLevel?
@@ -97,10 +97,13 @@ type Gear = {
   category: GearCategory
   isRequired: boolean      // 必須ギアフラグ
   isConsumable: boolean    // 消耗品フラグ（ガス・電池など）
+  stock?: number           // 消耗品の現在保有数（任意）
   memo?: string
   imageUrl?: string
   createdAt: Timestamp
 }
+
+type TripStatus = 'planned' | 'completed'
 
 type CampTrip = {
   id: string
@@ -109,6 +112,7 @@ type CampTrip = {
   date: string             // YYYY-MM-DD
   location?: string
   memo?: string
+  status: TripStatus       // planned: 予定/進行中, completed: 終了済み（在庫反映済み）
   createdAt: Timestamp
 }
 

@@ -33,11 +33,12 @@ export async function getTrip(id: string): Promise<CampTrip | null> {
 
 export async function addTrip(
   userId: string,
-  data: Omit<CampTrip, 'id' | 'userId' | 'createdAt'>
+  data: Omit<CampTrip, 'id' | 'userId' | 'createdAt' | 'status'>
 ): Promise<string> {
   const ref = await addDoc(collection(db, COLLECTION), {
     ...data,
     userId,
+    status: 'planned',
     createdAt: Timestamp.now(),
   })
   return ref.id
@@ -48,6 +49,13 @@ export async function updateTrip(
   data: Partial<Omit<CampTrip, 'id' | 'userId' | 'createdAt'>>
 ): Promise<void> {
   await updateDoc(doc(db, COLLECTION, id), data)
+}
+
+export async function updateTripStatus(
+  id: string,
+  status: import('@/types').TripStatus
+): Promise<void> {
+  await updateDoc(doc(db, COLLECTION, id), { status })
 }
 
 export async function deleteTrip(id: string): Promise<void> {
