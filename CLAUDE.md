@@ -72,7 +72,7 @@ trips/{tripId}
   userId, name, date, location, memo, createdAt
 
 tripGears/{tripGearId}
-  userId, tripId, gearId, checked, consumptionLevel?
+  userId, tripId, gearId, checked, quantity, quantityUsed, consumptionLevel?
 ```
 
 ### 型定義
@@ -117,8 +117,10 @@ type TripGear = {
   userId: string
   tripId: string
   gearId: string
-  checked: boolean              // チェックリスト用
-  consumptionLevel?: ConsumptionLevel  // 消耗品の使用量（任意・キャンプ後に記録）
+  checked: boolean                     // チェックリスト用
+  quantity: number                     // 持参数（デフォルト1）
+  quantityUsed: number                 // 使い切った数（0〜quantity）
+  consumptionLevel?: ConsumptionLevel  // 使い切れなかった残り1本の消費感（任意・キャンプ後に記録）
 }
 ```
 

@@ -17,10 +17,10 @@ const gears: Gear[] = [
 ]
 
 const tripGears: TripGear[] = [
-  { id: 'tg1', userId: 'u1', tripId: 'trip1', gearId: 'g1', checked: true },
-  { id: 'tg2', userId: 'u1', tripId: 'trip2', gearId: 'g1', checked: true },
-  { id: 'tg3', userId: 'u1', tripId: 'trip1', gearId: 'g2', checked: true },
-  { id: 'tg4', userId: 'u1', tripId: 'trip3', gearId: 'g1', checked: true },
+  { id: 'tg1', userId: 'u1', tripId: 'trip1', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0 },
+  { id: 'tg2', userId: 'u1', tripId: 'trip2', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0 },
+  { id: 'tg3', userId: 'u1', tripId: 'trip1', gearId: 'g2', checked: true, quantity: 1, quantityUsed: 0 },
+  { id: 'tg4', userId: 'u1', tripId: 'trip3', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0 },
 ]
 
 describe('calcGearUsageRanking', () => {
@@ -60,7 +60,7 @@ describe('filterUnusedGears', () => {
   it('全ギアが使用済みなら空配列を返す', () => {
     const allUsed: TripGear[] = [
       ...tripGears,
-      { id: 'tg5', userId: 'u1', tripId: 'trip1', gearId: 'g3', checked: true },
+      { id: 'tg5', userId: 'u1', tripId: 'trip1', gearId: 'g3', checked: true, quantity: 1, quantityUsed: 0 },
     ]
     expect(filterUnusedGears(gears, allUsed)).toHaveLength(0)
   })
@@ -79,27 +79,36 @@ describe('calcUsageByCategory', () => {
 })
 
 describe('calcConsumptionSuggestion', () => {
-  it('消費レベルが高い場合は多め推奨を返す', () => {
+  it('全て使い切りの場合は多め推奨を返す', () => {
     const tgs: TripGear[] = [
-      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, consumptionLevel: 'most' },
-      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, consumptionLevel: 'all' },
-      { id: 'tg3', userId: 'u1', tripId: 't3', gearId: 'g1', checked: true, consumptionLevel: 'most' },
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, quantity: 2, quantityUsed: 2 },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, quantity: 2, quantityUsed: 2 },
+      { id: 'tg3', userId: 'u1', tripId: 't3', gearId: 'g1', checked: true, quantity: 2, quantityUsed: 2 },
     ]
     expect(calcConsumptionSuggestion('g1', tgs)).toBe('多めに持参推奨')
   })
 
-  it('消費レベルが低い場合は少量で十分を返す', () => {
+  it('残りの消費感が高い場合は多め推奨を返す', () => {
     const tgs: TripGear[] = [
-      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, consumptionLevel: 'little' },
-      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, consumptionLevel: 'little' },
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0, consumptionLevel: 'most' },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0, consumptionLevel: 'all' },
+      { id: 'tg3', userId: 'u1', tripId: 't3', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0, consumptionLevel: 'most' },
+    ]
+    expect(calcConsumptionSuggestion('g1', tgs)).toBe('多めに持参推奨')
+  })
+
+  it('消費が少ない場合は少量で十分を返す', () => {
+    const tgs: TripGear[] = [
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0, consumptionLevel: 'little' },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0, consumptionLevel: 'little' },
     ]
     expect(calcConsumptionSuggestion('g1', tgs)).toBe('少量で十分')
   })
 
-  it('consumptionLevel が未設定のデータは無視する', () => {
+  it('quantity/quantityUsed/consumptionLevel 全て未設定は null を返す', () => {
     const tgs: TripGear[] = [
-      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true },
-      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: false },
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, quantity: 1, quantityUsed: 0 },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: false, quantity: 1, quantityUsed: 0 },
     ]
     expect(calcConsumptionSuggestion('g1', tgs)).toBeNull()
   })

@@ -8,6 +8,7 @@ import {
   addTripGear as addTripGearFS,
   updateTripGearChecked,
   updateTripGearConsumption,
+  updateTripGearQuantity,
   deleteTripGear as deleteTripGearFS,
 } from '@/lib/firestore/tripGears'
 import { getGears } from '@/lib/firestore/gears'
@@ -77,6 +78,18 @@ export function useTripGears(tripId: string) {
     []
   )
 
+  const updateQuantity = useCallback(
+    async (tripGearId: string, quantity: number, quantityUsed: number) => {
+      setTripGears((prev) =>
+        prev.map((tg) =>
+          tg.id === tripGearId ? { ...tg, quantity, quantityUsed } : tg
+        )
+      )
+      await updateTripGearQuantity(tripGearId, quantity, quantityUsed)
+    },
+    []
+  )
+
   const removeTripGear = useCallback(
     async (tripGearId: string) => {
       await deleteTripGearFS(tripGearId)
@@ -105,6 +118,7 @@ export function useTripGears(tripId: string) {
     addTripGear,
     toggleCheck,
     updateConsumptionLevel,
+    updateQuantity,
     removeTripGear,
     addRequiredGears,
     reload: load,

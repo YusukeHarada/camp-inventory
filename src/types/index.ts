@@ -39,5 +39,7 @@ export type TripGear = {
   tripId: string
   gearId: string
   checked: boolean
+  quantity: number
+  quantityUsed: number
   consumptionLevel?: ConsumptionLevel
 }
