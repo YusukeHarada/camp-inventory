@@ -27,7 +27,7 @@ export function useTripGears(tripId: string) {
     setError(null)
     try {
       const [tgs, gs, allTgs] = await Promise.all([
-        getTripGears(tripId),
+        getTripGears(tripId, user.uid),
         getGears(user.uid),
         getTripGearsByUserId(user.uid),
       ])
