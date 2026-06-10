@@ -3,6 +3,7 @@ import {
   calcGearUsageRanking,
   filterUnusedGears,
   calcUsageByCategory,
+  calcConsumptionSuggestion,
 } from '@/lib/utils/statistics'
 import type { Gear, TripGear } from '@/types'
 import type { Timestamp } from 'firebase/firestore'
@@ -10,9 +11,9 @@ import type { Timestamp } from 'firebase/firestore'
 const fakeTimestamp = { toDate: () => new Date() } as Timestamp
 
 const gears: Gear[] = [
-  { id: 'g1', userId: 'u1', name: 'テント', category: 'tent-tarp', isRequired: true, createdAt: fakeTimestamp },
-  { id: 'g2', userId: 'u1', name: 'シュラフ', category: 'bedding', isRequired: false, createdAt: fakeTimestamp },
-  { id: 'g3', userId: 'u1', name: 'チェア', category: 'furniture', isRequired: false, createdAt: fakeTimestamp },
+  { id: 'g1', userId: 'u1', name: 'テント', category: 'tent', isRequired: true, isConsumable: false, createdAt: fakeTimestamp },
+  { id: 'g2', userId: 'u1', name: 'シュラフ', category: 'tent', isRequired: false, isConsumable: false, createdAt: fakeTimestamp },
+  { id: 'g3', userId: 'u1', name: 'チェア', category: 'furniture', isRequired: false, isConsumable: false, createdAt: fakeTimestamp },
 ]
 
 const tripGears: TripGear[] = [
@@ -72,8 +73,38 @@ describe('filterUnusedGears', () => {
 describe('calcUsageByCategory', () => {
   it('カテゴリ別の使用回数を集計する', () => {
     const result = calcUsageByCategory(gears, tripGears)
-    expect(result['tent-tarp']).toBe(3)
-    expect(result['bedding']).toBe(1)
+    expect(result['tent']).toBe(4)
     expect(result['furniture']).toBeUndefined()
+  })
+})
+
+describe('calcConsumptionSuggestion', () => {
+  it('消費レベルが高い場合は多め推奨を返す', () => {
+    const tgs: TripGear[] = [
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, consumptionLevel: 'most' },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, consumptionLevel: 'all' },
+      { id: 'tg3', userId: 'u1', tripId: 't3', gearId: 'g1', checked: true, consumptionLevel: 'most' },
+    ]
+    expect(calcConsumptionSuggestion('g1', tgs)).toBe('多めに持参推奨')
+  })
+
+  it('消費レベルが低い場合は少量で十分を返す', () => {
+    const tgs: TripGear[] = [
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true, consumptionLevel: 'little' },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: true, consumptionLevel: 'little' },
+    ]
+    expect(calcConsumptionSuggestion('g1', tgs)).toBe('少量で十分')
+  })
+
+  it('consumptionLevel が未設定のデータは無視する', () => {
+    const tgs: TripGear[] = [
+      { id: 'tg1', userId: 'u1', tripId: 't1', gearId: 'g1', checked: true },
+      { id: 'tg2', userId: 'u1', tripId: 't2', gearId: 'g1', checked: false },
+    ]
+    expect(calcConsumptionSuggestion('g1', tgs)).toBeNull()
+  })
+
+  it('対象ギアのデータがない場合は null を返す', () => {
+    expect(calcConsumptionSuggestion('g99', tripGears)).toBeNull()
   })
 })

@@ -13,6 +13,7 @@ const gearSchema = z.object({
   name: z.string().min(1, '名前を入力してください').max(50, '50文字以内で入力してください'),
   category: z.enum(GEAR_CATEGORY_KEYS as [string, ...string[]]),
   isRequired: z.boolean(),
+  isConsumable: z.boolean(),
   memo: z.string().max(200, '200文字以内で入力してください').optional(),
   imageUrl: z.string().url('正しいURLを入力してください').optional().or(z.literal('')),
 })
@@ -35,6 +36,7 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
     resolver: zodResolver(gearSchema),
     defaultValues: {
       isRequired: false,
+      isConsumable: false,
       category: 'other',
       ...defaultValues,
     },
@@ -66,6 +68,14 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
           {...register('isRequired')}
         />
         必須ギア（忘れてはいけないもの）
+      </label>
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          {...register('isConsumable')}
+        />
+        消耗品（ガス・電池など使い切るもの）
       </label>
       <Input
         label="メモ"

@@ -29,6 +29,7 @@ export default function GearsPage() {
       name: data.name,
       category: data.category as GearCategory,
       isRequired: data.isRequired,
+      isConsumable: data.isConsumable,
       memo: data.memo,
       imageUrl: data.imageUrl,
     })
@@ -41,6 +42,7 @@ export default function GearsPage() {
       name: data.name,
       category: data.category as GearCategory,
       isRequired: data.isRequired,
+      isConsumable: data.isConsumable,
       memo: data.memo,
       imageUrl: data.imageUrl,
     })
@@ -116,6 +118,7 @@ export default function GearsPage() {
               name: editingGear.name,
               category: editingGear.category,
               isRequired: editingGear.isRequired,
+              isConsumable: editingGear.isConsumable,
               memo: editingGear.memo,
               imageUrl: editingGear.imageUrl,
             }}

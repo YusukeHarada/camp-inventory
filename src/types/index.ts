@@ -1,23 +1,15 @@
 import type { Timestamp } from 'firebase/firestore'
 
 export type GearCategory =
-  | 'tent-tarp'
-  | 'bedding'
+  | 'tent'
   | 'furniture'
-  | 'cookware'
-  | 'tableware'
-  | 'fuel-ignition'
-  | 'light-lantern'
-  | 'coolerbox'
-  | 'storage'
-  | 'carry-cart'
-  | 'battery'
-  | 'air-conditioning'
-  | 'field-gear'
+  | 'kitchen'
+  | 'lighting'
+  | 'tools'
   | 'apparel'
-  | 'bag'
-  | 'shoes'
   | 'other'
+
+export type ConsumptionLevel = 'little' | 'half' | 'most' | 'all'
 
 export type Gear = {
   id: string
@@ -25,6 +17,7 @@ export type Gear = {
   name: string
   category: GearCategory
   isRequired: boolean
+  isConsumable: boolean
   memo?: string
   imageUrl?: string
   createdAt: Timestamp
@@ -46,4 +39,5 @@ export type TripGear = {
   tripId: string
   gearId: string
   checked: boolean
+  consumptionLevel?: ConsumptionLevel
 }

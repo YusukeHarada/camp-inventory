@@ -53,6 +53,13 @@ export async function updateTripGearChecked(id: string, checked: boolean): Promi
   await updateDoc(doc(db, COLLECTION, id), { checked })
 }
 
+export async function updateTripGearConsumption(
+  id: string,
+  consumptionLevel: import('@/types').ConsumptionLevel | null
+): Promise<void> {
+  await updateDoc(doc(db, COLLECTION, id), { consumptionLevel: consumptionLevel ?? null })
+}
+
 export async function deleteTripGear(id: string): Promise<void> {
   await deleteDoc(doc(db, COLLECTION, id))
 }
