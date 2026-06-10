@@ -18,10 +18,13 @@ export type Gear = {
   category: GearCategory
   isRequired: boolean
   isConsumable: boolean
+  stock?: number           // 消耗品の現在保有数
   memo?: string
   imageUrl?: string
   createdAt: Timestamp
 }
+
+export type TripStatus = 'planned' | 'completed'
 
 export type CampTrip = {
   id: string
@@ -30,6 +33,7 @@ export type CampTrip = {
   date: string
   location?: string
   memo?: string
+  status: TripStatus
   createdAt: Timestamp
 }
 

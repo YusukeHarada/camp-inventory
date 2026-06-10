@@ -11,14 +11,17 @@ import {
   updateTripGearQuantity,
   deleteTripGear as deleteTripGearFS,
 } from '@/lib/firestore/tripGears'
-import { getGears } from '@/lib/firestore/gears'
-import type { TripGear, Gear, ConsumptionLevel } from '@/types'
+import { getGears, updateGear } from '@/lib/firestore/gears'
+import { getTrip, updateTripStatus } from '@/lib/firestore/trips'
+import { calcConsumedUnits } from '@/lib/utils/statistics'
+import type { TripGear, Gear, ConsumptionLevel, TripStatus } from '@/types'
 
 export function useTripGears(tripId: string) {
   const { user } = useAuth()
   const [tripGears, setTripGears] = useState<TripGear[]>([])
   const [allTripGears, setAllTripGears] = useState<TripGear[]>([])
   const [allGears, setAllGears] = useState<Gear[]>([])
+  const [tripStatus, setTripStatus] = useState<TripStatus>('planned')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,14 +30,16 @@ export function useTripGears(tripId: string) {
     setLoading(true)
     setError(null)
     try {
-      const [tgs, gs, allTgs] = await Promise.all([
+      const [tgs, gs, allTgs, trip] = await Promise.all([
         getTripGears(tripId, user.uid),
         getGears(user.uid),
         getTripGearsByUserId(user.uid),
+        getTrip(tripId),
       ])
       setTripGears(tgs)
       setAllGears(gs)
       setAllTripGears(allTgs)
+      setTripStatus(trip?.status ?? 'planned')
     } catch (e) {
       console.error('useTripGears load error:', e)
       setError(e instanceof Error ? e.message : 'データの読み込みに失敗しました')
@@ -98,6 +103,24 @@ export function useTripGears(tripId: string) {
     [load]
   )
 
+  // キャンプ終了: 消耗品の消費本数を在庫から差し引き、status を completed に更新
+  const completeTrip = useCallback(async () => {
+    if (!user) return
+    const gearMap = new Map(allGears.map((g) => [g.id, g]))
+    await Promise.all(
+      tripGears.map(async (tg) => {
+        const gear = gearMap.get(tg.gearId)
+        if (!gear?.isConsumable || gear.stock === undefined) return
+        const consumed = calcConsumedUnits(tg)
+        if (consumed === 0) return
+        const nextStock = Math.max(0, gear.stock - consumed)
+        await updateGear(gear.id, { stock: nextStock })
+      })
+    )
+    await updateTripStatus(tripId, 'completed')
+    await load()
+  }, [user, tripId, tripGears, allGears, load])
+
   const addRequiredGears = useCallback(async () => {
     if (!user) return
     const requiredGears = allGears.filter((g) => g.isRequired)
@@ -113,6 +136,7 @@ export function useTripGears(tripId: string) {
     allTripGears,
     allGears,
     unplannedGears,
+    tripStatus,
     loading,
     error,
     addTripGear,
@@ -121,6 +145,7 @@ export function useTripGears(tripId: string) {
     updateQuantity,
     removeTripGear,
     addRequiredGears,
+    completeTrip,
     reload: load,
   }
 }

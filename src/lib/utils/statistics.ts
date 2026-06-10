@@ -45,6 +45,13 @@ const CONSUMPTION_SCORE: Record<ConsumptionLevel, number> = {
   all: 4,
 }
 
+// 1回のキャンプで実際に開封した本数（使い切り数 + 残りがあれば+1）
+export function calcConsumedUnits(tg: TripGear): number {
+  const quantityUsed = tg.quantityUsed ?? 0
+  const hasPartial = quantityUsed < (tg.quantity ?? 1) && tg.consumptionLevel !== undefined
+  return quantityUsed + (hasPartial ? 1 : 0)
+}
+
 // 1回のキャンプでの消費量を 0〜1 の比率で算出（使い切り数 + 残りの消費感を合算）
 function calcConsumptionRatio(tg: TripGear): number | null {
   const quantity = tg.quantity ?? 1

@@ -14,6 +14,7 @@ const gearSchema = z.object({
   category: z.enum(GEAR_CATEGORY_KEYS as [string, ...string[]]),
   isRequired: z.boolean(),
   isConsumable: z.boolean(),
+  stock: z.number().int().min(0, '0以上の整数を入力してください').optional(),
   memo: z.string().max(200, '200文字以内で入力してください').optional(),
   imageUrl: z.string().url('正しいURLを入力してください').optional().or(z.literal('')),
 })
@@ -39,11 +40,13 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
       isRequired: false,
       isConsumable: false,
       category: 'other',
+      stock: undefined,
       ...defaultValues,
     },
   })
 
   const selectedCategory = watch('category') as GearCategory
+  const isConsumable = watch('isConsumable')
 
   const categoryOptions = GEAR_CATEGORY_KEYS.map((key) => ({
     value: key,
@@ -90,6 +93,15 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
         />
         消耗品（ガス・電池など使い切るもの）
       </label>
+      {isConsumable && (
+        <Input
+          label="現在の保有数"
+          type="number"
+          placeholder="例: 3"
+          error={errors.stock?.message}
+          {...register('stock', { valueAsNumber: true })}
+        />
+      )}
       <Input
         label="メモ"
         placeholder="購入場所、サイズなど"
