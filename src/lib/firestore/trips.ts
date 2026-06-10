@@ -8,7 +8,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -19,11 +18,11 @@ const COLLECTION = 'trips'
 export async function getTrips(userId: string): Promise<CampTrip[]> {
   const q = query(
     collection(db, COLLECTION),
-    where('userId', '==', userId),
-    orderBy('date', 'desc')
+    where('userId', '==', userId)
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as CampTrip))
+  const trips = snap.docs.map((d) => ({ id: d.id, ...d.data() } as CampTrip))
+  return trips.sort((a, b) => (a.date < b.date ? 1 : -1))
 }
 
 export async function getTrip(id: string): Promise<CampTrip | null> {

@@ -7,7 +7,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -18,11 +17,11 @@ const COLLECTION = 'gears'
 export async function getGears(userId: string): Promise<Gear[]> {
   const q = query(
     collection(db, COLLECTION),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('userId', '==', userId)
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Gear))
+  const gears = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Gear))
+  return gears.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
 }
 
 export async function addGear(
