@@ -38,6 +38,7 @@ export async function addTripGear(
   const existing = await getDocs(
     query(
       collection(db, COLLECTION),
+      where('userId', '==', userId),
       where('tripId', '==', tripId),
       where('gearId', '==', gearId)
     )
