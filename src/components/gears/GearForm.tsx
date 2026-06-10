@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import { GEAR_CATEGORY_KEYS, GEAR_CATEGORY_LABELS } from '@/lib/constants/categories'
-import type { Gear } from '@/types'
+import { GEAR_CATEGORY_KEYS, GEAR_CATEGORY_LABELS, GEAR_CATEGORY_DESCRIPTIONS, GEAR_CATEGORY_EXAMPLES } from '@/lib/constants/categories'
+import type { Gear, GearCategory } from '@/types'
 
 const gearSchema = z.object({
   name: z.string().min(1, '名前を入力してください').max(50, '50文字以内で入力してください'),
@@ -31,6 +31,7 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<GearFormData>({
     resolver: zodResolver(gearSchema),
@@ -41,6 +42,8 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
       ...defaultValues,
     },
   })
+
+  const selectedCategory = watch('category') as GearCategory
 
   const categoryOptions = GEAR_CATEGORY_KEYS.map((key) => ({
     value: key,
@@ -55,12 +58,22 @@ export function GearForm({ defaultValues, onSubmit, onCancel, submitLabel = '登
         error={errors.name?.message}
         {...register('name')}
       />
-      <Select
-        label="カテゴリ *"
-        options={categoryOptions}
-        error={errors.category?.message}
-        {...register('category')}
-      />
+      <div>
+        <Select
+          label="カテゴリ *"
+          options={categoryOptions}
+          error={errors.category?.message}
+          {...register('category')}
+        />
+        {selectedCategory && (
+          <div className="mt-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-200">
+            <p>{GEAR_CATEGORY_DESCRIPTIONS[selectedCategory]}</p>
+            <p className="mt-0.5 text-emerald-600 dark:text-emerald-400">
+              例: {GEAR_CATEGORY_EXAMPLES[selectedCategory].join('、')}
+            </p>
+          </div>
+        )}
+      </div>
       <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
         <input
           type="checkbox"
