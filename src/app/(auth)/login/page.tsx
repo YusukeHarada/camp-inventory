@@ -23,8 +23,17 @@ export default function LoginPage() {
     setIsSigningIn(true)
     try {
       await signIn()
-    } catch {
-      setError('ログインに失敗しました。もう一度お試しください。')
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? ''
+      if (code === 'auth/popup-blocked') {
+        setError('ポップアップがブロックされました。ブラウザのアドレスバー右側でポップアップを許可してから再試行してください。')
+      } else if (code === 'auth/popup-closed-by-user') {
+        // ユーザーが自分でポップアップを閉じた場合はエラー表示しない
+      } else if (code === 'auth/cancelled-popup-request') {
+        // 複数回クリックによるキャンセルは無視
+      } else {
+        setError('ログインに失敗しました。Firebase Console でこのドメインが「承認済みドメイン」に登録されているか確認してください。')
+      }
     } finally {
       setIsSigningIn(false)
     }
