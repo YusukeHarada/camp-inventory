@@ -6,7 +6,7 @@ import {
   indexedDBLocalPersistence,
   browserPopupRedirectResolver,
 } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { initializeFirestore, getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? 'placeholder-api-key',
@@ -35,4 +35,13 @@ function createAuth() {
 }
 
 export const auth = createAuth()
-export const db = getFirestore(app)
+
+function createFirestore() {
+  try {
+    return initializeFirestore(app, { ignoreUndefinedProperties: true })
+  } catch {
+    return getFirestore(app)
+  }
+}
+
+export const db = createFirestore()
