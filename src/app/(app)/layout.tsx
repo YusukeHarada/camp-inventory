@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { SettingsProvider } from '@/contexts/SettingsContext'
 import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { PageLoading } from '@/components/ui/LoadingSpinner'
@@ -21,10 +22,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 pb-20 pt-4 px-4">{children}</main>
-      <BottomNav />
-    </div>
+    <SettingsProvider>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 pb-20 pt-4 px-4">{children}</main>
+        <BottomNav />
+      </div>
+    </SettingsProvider>
   )
 }
