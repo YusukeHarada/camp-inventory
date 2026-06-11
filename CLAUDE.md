@@ -59,7 +59,7 @@ src/
 │   ├── firestore/     # gears.ts, trips.ts, tripGears.ts
 │   └── utils/         # cn.ts, date.ts, statistics.ts
 ├── types/             # Gear, CampTrip, TripGear
-└── contexts/          # AuthContext
+└── contexts/          # AuthContext, SettingsContext
 ```
 
 ## データモデル（Firestore）
@@ -132,7 +132,7 @@ type TripGear = {
 
 ## 画面構成
 
-1. **ギア一覧** `/gears` — 所持ギアの表示・登録・編集・削除、カテゴリフィルタ
+1. **ギア一覧** `/gears` — 所持ギアの表示・登録・編集・削除、カテゴリフィルタ、画像サムネイル表示
 1. **キャンプ一覧** `/trips` — 過去・予定のキャンプ記録一覧
 1. **キャンプ詳細** `/trips/[id]` — 持ち物プランニング＆チェックリスト
 1. **統計** `/statistics` — 持参回数ランキング、未使用ギア一覧（recharts）
@@ -144,6 +144,13 @@ type TripGear = {
 - TypeScript strict mode を常に維持（`any` 禁止）
 - Firestoreアクセスは `src/lib/firestore/` に集約し、コンポーネントから直接叩かない
 - ドメインロジック（統計計算など）は `src/lib/utils/` に純粋関数として実装しテスト対象とする
+
+### アプリ設定（SettingsContext）
+
+- UI の表示設定は `src/contexts/SettingsContext.tsx` で管理し `useSettings()` フックで参照する
+- 設定は `localStorage` に永続化（キー: `campgear_settings`）
+- `SettingsProvider` は `(app)/layout.tsx` に配置（認証必須ページのみ適用）
+- 現在の設定項目: `showGearImages`（ギア画像サムネイルの表示 ON/OFF、デフォルト OFF）
 
 ### 認証
 

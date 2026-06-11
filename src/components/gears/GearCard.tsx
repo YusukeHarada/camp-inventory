@@ -3,6 +3,7 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { GEAR_CATEGORY_LABELS } from '@/lib/constants/categories'
+import { useSettings } from '@/contexts/SettingsContext'
 import type { Gear } from '@/types'
 
 type Props = {
@@ -13,8 +14,18 @@ type Props = {
 }
 
 export function GearCard({ gear, usageCount, onEdit, onDelete }: Props) {
+  const { showGearImages } = useSettings()
+
   return (
     <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+      {showGearImages && gear.imageUrl && (
+        <img
+          src={gear.imageUrl}
+          alt={gear.name}
+          className="h-16 w-16 shrink-0 rounded-lg object-cover"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{gear.name}</p>
