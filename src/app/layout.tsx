@@ -6,9 +6,16 @@ export const metadata: Metadata = {
   title: 'CampGear — キャンプギア管理',
   description: 'キャンプギアの管理とプランニングアプリ',
   manifest: '/manifest.json',
+  icons: {
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'CampGear',
   },
 }
