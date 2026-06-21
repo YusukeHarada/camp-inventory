@@ -1,89 +1,89 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、リポジトリ内のコードを扱う Claude Code (claude.ai/code) へのガイダンスを提供します。
 
-## Important: Next.js version
+## 注意: Next.js のバージョンについて
 
-This project uses a Next.js version with breaking API changes that may differ from training data. Before writing any Next.js-specific code, check `node_modules/next/dist/docs/` for current conventions.
+このプロジェクトは、学習データと異なる破壊的変更を含む Next.js バージョンを使用しています。Next.js 固有のコードを書く前に、`node_modules/next/dist/docs/` で最新の規約を確認してください。
 
-## Commands
+## コマンド
 
 ```bash
-npm run dev          # dev server
-npm run build        # production build
+npm run dev          # 開発サーバー起動
+npm run build        # 本番ビルド
 npm run lint         # ESLint
-npx tsc --noEmit     # type check
+npx tsc --noEmit     # 型チェック
 
-npm run test         # vitest (watch mode)
-npm run test:run     # vitest (single run)
-npm run test:run -- src/__tests__/lib/utils/statistics.test.ts  # single file
+npm run test         # vitest (ウォッチモード)
+npm run test:run     # vitest (1回実行)
+npm run test:run -- src/__tests__/lib/utils/statistics.test.ts  # 単一ファイル実行
 npm run test:coverage
 ```
 
-Before delivering any change, verify all three pass:
+変更を納品する前に、以下の3つがすべて通ることを確認すること:
 
 ```bash
 npx tsc --noEmit && npm run test:run && npm run build
 ```
 
-## Architecture
+## アーキテクチャ
 
-### Request flow
+### リクエストの流れ
 
 ```
-Page component
-  → custom hook (src/hooks/)
-    → Firestore functions (src/lib/firestore/)
+ページコンポーネント
+  → カスタムフック (src/hooks/)
+    → Firestore 関数 (src/lib/firestore/)
       → Firebase SDK
 ```
 
-Components never call Firestore directly. All Firestore access is isolated in `src/lib/firestore/{gears,trips,tripGears}.ts`. Domain logic (statistics, consumption calculations) lives in `src/lib/utils/` as pure functions and is the primary test target.
+コンポーネントは Firestore を直接呼び出さない。すべての Firestore アクセスは `src/lib/firestore/{gears,trips,tripGears}.ts` に集約されている。ドメインロジック（統計・消費量計算など）は `src/lib/utils/` に純粋関数として実装されており、テストの主な対象となる。
 
-### Route groups
+### ルートグループ
 
-- `src/app/(auth)/` — unauthenticated pages (login)
-- `src/app/(app)/` — auth-protected pages (gears, trips, statistics)
+- `src/app/(auth)/` — 未認証ページ（ログイン）
+- `src/app/(app)/` — 認証必須ページ（gears, trips, statistics）
 
-The auth guard is in `src/app/(app)/layout.tsx`: it reads from `AuthContext` and redirects to `/login` if no user. `AuthProvider` wraps the entire app in the root layout; `SettingsProvider` is only inside `(app)/layout.tsx`.
+認証ガードは `src/app/(app)/layout.tsx` にある。`AuthContext` を参照し、未ログインの場合は `/login` にリダイレクトする。`AuthProvider` はルートレイアウトでアプリ全体を囲み、`SettingsProvider` は `(app)/layout.tsx` 内にのみ配置されている。
 
-### Hook data pattern
+### フックのデータパターン
 
-All data hooks (`useGears`, `useTrips`, `useTripGears`, `useStatistics`) follow a fetch-on-mutate approach: after every mutation they call a shared `load()` function to refresh local state from Firestore. `useTripGears` is the most complex — it loads four collections in parallel and exposes `unplannedGears` (gears not yet added to the trip) as a derived value.
+すべてのデータフック（`useGears`、`useTrips`、`useTripGears`、`useStatistics`）は「更新後に再取得」方式を採用している。ミューテーションのたびに共通の `load()` 関数を呼び出して Firestore からローカル状態を再取得する。`useTripGears` が最も複雑で、4つのコレクションを並列取得し、`unplannedGears`（まだ旅行に追加されていないギア）を派生値として公開する。
 
-### Consumable stock flow
+### 消耗品の在庫フロー
 
-`usageCount` (持参回数) is never stored in Firestore — it is computed by counting `TripGear` documents. When `completeTrip()` is called, `calcConsumedUnits()` (from `src/lib/utils/statistics.ts`) calculates how many units were actually used per consumable gear and decrements `Gear.stock` in Firestore. Trip `status` is then set to `'completed'`.
+`usageCount`（持参回数）は Firestore に保存されず、`TripGear` ドキュメントを集計して算出する。`completeTrip()` が呼び出されると、`calcConsumedUnits()`（`src/lib/utils/statistics.ts`）が消耗品ごとの実際の使用数を計算し、Firestore の `Gear.stock` を減算する。その後、旅行の `status` が `'completed'` に更新される。
 
-### Statistics functions (`src/lib/utils/statistics.ts`)
+### 統計関数 (`src/lib/utils/statistics.ts`)
 
-Pure functions that take `Gear[]` and `TripGear[]` as arguments:
-- `calcGearUsageRanking` — sorts by trip count
-- `filterUnusedGears` — gears with zero TripGear records
-- `calcConsumptionSuggestion` — returns a Japanese suggestion string based on average consumption ratio across past trips; returns `null` if no data
+`Gear[]` と `TripGear[]` を引数に取る純粋関数群:
+- `calcGearUsageRanking` — 持参回数の降順でソート
+- `filterUnusedGears` — TripGear レコードがゼロのギアを返す
+- `calcConsumptionSuggestion` — 過去の平均消費比率に基づく日本語サジェスト文字列を返す。データがない場合は `null`
 
-## Key conventions
+## 規約
 
 ### TypeScript
 
-`any` is banned; strict mode is always on. `@` is a path alias for `src/`.
+`any` は禁止。strict モードを常に維持。`@` は `src/` へのパスエイリアス。
 
-### Authentication
+### 認証
 
-- Only `signInWithPopup` (Google OAuth). `signInWithRedirect` is banned due to iOS Safari ITP erasing sessionStorage.
-- `initializeAuth` **must** receive `browserPopupRedirectResolver`; omitting it causes `auth/argument-error` on `signInWithPopup`. `getAuth` includes it by default but `initializeAuth` does not.
-- Firestore is initialized with `ignoreUndefinedProperties: true` to handle optional fields cleanly.
+- `signInWithPopup`（Google OAuth）のみ使用。`signInWithRedirect` は iOS Safari の ITP で sessionStorage が消去されるため禁止。
+- `initializeAuth` には **必ず** `browserPopupRedirectResolver` を渡すこと。省略すると `signInWithPopup` が `auth/argument-error` で失敗する。`getAuth` はデフォルトで含むが `initializeAuth` は含まない。
+- Firestore は `ignoreUndefinedProperties: true` で初期化し、オプショナルフィールドを適切に扱う。
 
-### Settings
+### 設定
 
-UI preferences are managed in `SettingsContext` (persisted to `localStorage` under key `campgear_settings`). Currently: `showGearImages` (default `false`). Access via `useSettings()`.
+UI の表示設定は `SettingsContext` で管理し（`localStorage` のキー `campgear_settings` に永続化）、`useSettings()` フックでアクセスする。現在の設定項目: `showGearImages`（デフォルト `false`）。
 
-### Testing
+### テスト
 
-Tests live under `src/__tests__/`. The global setup in `src/__tests__/setup.ts` mocks `next/navigation` and `@/lib/firebase` for all tests. Use `{ toDate: () => new Date() } as Timestamp` for fake Firestore timestamps in test fixtures.
+テストは `src/__tests__/` 以下に配置する。`src/__tests__/setup.ts` のグローバルセットアップで `next/navigation` と `@/lib/firebase` がすべてのテストでモック済み。テストフィクスチャの Firestore タイムスタンプには `{ toDate: () => new Date() } as Timestamp` を使用する。
 
-Only domain/utility functions require unit tests. Component tests may be added but are not required.
+ユニットテストはドメイン・ユーティリティ関数のみ必須。コンポーネントテストは任意。
 
-## Data model
+## データモデル
 
 ```
 gears/{gearId}       userId, name, category, isRequired, isConsumable, stock?, memo, imageUrl, createdAt
@@ -93,10 +93,10 @@ tripGears/{id}       userId, tripId, gearId, checked, quantity, quantityUsed, co
 
 `GearCategory`: `tent | furniture | kitchen | lighting | tools | apparel | other`
 
-`ConsumptionLevel`: `little | half | most | all` — used for partial consumption of a consumable in a single trip.
+`ConsumptionLevel`: `little | half | most | all` — 1回のキャンプでの消耗品の部分的な使用感を表す。
 
-Display labels for categories are in `src/lib/constants/categories.ts`.
+カテゴリの表示ラベルは `src/lib/constants/categories.ts` にある。
 
-## Environment
+## 環境変数
 
-Copy `.env.example` to `.env.local` and fill in Firebase project values (`NEXT_PUBLIC_FIREBASE_*`). No other environment variables are needed for local development.
+`.env.example` を `.env.local` にコピーし、Firebase プロジェクトの値（`NEXT_PUBLIC_FIREBASE_*`）を記入する。ローカル開発に必要な環境変数はこれのみ。
