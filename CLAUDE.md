@@ -1,202 +1,102 @@
-# camp-gear-manager — CLAUDE.md
+# CLAUDE.md
 
-## プロジェクト概要
+このファイルは、リポジトリ内のコードを扱う Claude Code (claude.ai/code) へのガイダンスを提供します。
 
-個人・家族向けのキャンプギア管理Webアプリ。
-所持ギアの把握、キャンプごとの持ち物プランニング、持参履歴・回数の記録を目的とする。
+## 注意: Next.js のバージョンについて
 
-## ユーザーストーリー
+このプロジェクトは、学習データと異なる破壊的変更を含む Next.js バージョンを使用しています。Next.js 固有のコードを書く前に、`node_modules/next/dist/docs/` で最新の規約を確認してください。
 
-- 所持しているギアを一覧で確認したい
-- 次のキャンプで何を持っていくかプランニングしたい
-- ギアごとに「何回持っていったか」を把握したい
-- 必須ギア（忘れてはいけないもの）を設定しておきたい
-- 過去のキャンプで実際に持っていったギアを振り返りたい
+## コマンド
 
-## 技術スタック
+```bash
+npm run dev          # 開発サーバー起動
+npm run build        # 本番ビルド
+npm run lint         # ESLint
+npx tsc --noEmit     # 型チェック
 
-|役割      |ライブラリ                     |バージョン      |
-|--------|--------------------------|-----------|
-|フレームワーク |Next.js (App Router)      |16         |
-|UI ランタイム|React                     |19         |
-|言語      |TypeScript                |^5         |
-|スタイリング  |Tailwind CSS              |^4         |
-|クラス結合   |clsx + tailwind-merge     |latest     |
-|アイコン    |lucide-react              |latest     |
-|グラフ     |recharts                  |latest     |
-|フォーム管理  |react-hook-form           |^7         |
-|スキーマ検証  |zod                       |^4         |
-|リゾルバー連携 |@hookform/resolvers       |latest     |
-|日付処理    |date-fns                  |^4（ja ロケール）|
-|認証・DB   |Firebase（Auth + Firestore）|^12        |
-|ホスティング  |Vercel                    |—          |
-
-### テスト
-
-|役割        |ライブラリ                                |
-|----------|-------------------------------------|
-|単体・コンポーネント|Vitest ^4 + React Testing Library ^16|
-|DOM 検証    |@testing-library/jest-dom            |
-|E2E       |Playwright ^1.60                     |
-|テスト DOM   |jsdom                                |
-
-## ディレクトリ構成
-
-```
-src/
-├── app/
-│   ├── (auth)/        # ログインページ
-│   └── (app)/         # 認証必須ページ（gears, trips, statistics）
-├── components/
-│   ├── ui/            # 汎用UIコンポーネント
-│   ├── layout/        # ヘッダー・ナビゲーション
-│   ├── gears/         # ギア関連コンポーネント
-│   ├── trips/         # キャンプ記録関連
-│   └── statistics/    # 統計関連
-├── hooks/             # useGears, useTrips, useTripGears, useStatistics
-├── lib/
-│   ├── firebase.ts
-│   ├── firestore/     # gears.ts, trips.ts, tripGears.ts
-│   └── utils/         # cn.ts, date.ts, statistics.ts
-├── types/             # Gear, CampTrip, TripGear
-└── contexts/          # AuthContext, SettingsContext
+npm run test         # vitest (ウォッチモード)
+npm run test:run     # vitest (1回実行)
+npm run test:run -- src/__tests__/lib/utils/statistics.test.ts  # 単一ファイル実行
+npm run test:coverage
 ```
 
-## データモデル（Firestore）
+変更を納品する前に、以下の3つがすべて通ることを確認すること:
 
-```
-gears/{gearId}
-  userId, name, category, isRequired, isConsumable, stock?, memo, imageUrl, createdAt
-
-trips/{tripId}
-  userId, name, date, location, memo, status, createdAt
-
-tripGears/{tripGearId}
-  userId, tripId, gearId, checked, quantity, quantityUsed, consumptionLevel?
+```bash
+npx tsc --noEmit && npm run test:run && npm run build
 ```
 
-### 型定義
+## アーキテクチャ
 
-```ts
-type GearCategory =
-  | 'tent'        // テント・タープ・寝具
-  | 'furniture'   // チェア・テーブル・収納・キャリー・冷暖房・バッグ
-  | 'kitchen'     // 調理器具・食器・燃料・クーラーボックス
-  | 'lighting'    // ランタン・ライト・電源・バッテリー
-  | 'tools'       // フィールドギア
-  | 'apparel'     // ウェア・シューズ
-  | 'other'       // その他
+### リクエストの流れ
 
-// 消耗品の使用感覚（キャンプ後に記録）
-type ConsumptionLevel = 'little' | 'half' | 'most' | 'all'
-
-type Gear = {
-  id: string
-  userId: string
-  name: string
-  category: GearCategory
-  isRequired: boolean      // 必須ギアフラグ
-  isConsumable: boolean    // 消耗品フラグ（ガス・電池など）
-  stock?: number           // 消耗品の現在保有数（任意）
-  memo?: string
-  imageUrl?: string
-  createdAt: Timestamp
-}
-
-type TripStatus = 'planned' | 'completed'
-
-type CampTrip = {
-  id: string
-  userId: string
-  name: string             // 例: "奥多摩キャンプ 2025夏"
-  date: string             // YYYY-MM-DD
-  location?: string
-  memo?: string
-  status: TripStatus       // planned: 予定/進行中, completed: 終了済み（在庫反映済み）
-  createdAt: Timestamp
-}
-
-type TripGear = {
-  id: string
-  userId: string
-  tripId: string
-  gearId: string
-  checked: boolean                     // チェックリスト用
-  quantity: number                     // 持参数（デフォルト1）
-  quantityUsed: number                 // 使い切った数（0〜quantity）
-  consumptionLevel?: ConsumptionLevel  // 使い切れなかった残り1本の消費感（任意・キャンプ後に記録）
-}
+```
+ページコンポーネント
+  → カスタムフック (src/hooks/)
+    → Firestore 関数 (src/lib/firestore/)
+      → Firebase SDK
 ```
 
-※ usageCount（持参回数）は TripGear を集計して算出する（Firestore に冗長保存しない）
+コンポーネントは Firestore を直接呼び出さない。すべての Firestore アクセスは `src/lib/firestore/{gears,trips,tripGears}.ts` に集約されている。ドメインロジック（統計・消費量計算など）は `src/lib/utils/` に純粋関数として実装されており、テストの主な対象となる。
 
-## 画面構成
+### ルートグループ
 
-1. **ギア一覧** `/gears` — 所持ギアの表示・登録・編集・削除、カテゴリフィルタ、画像サムネイル表示
-1. **キャンプ一覧** `/trips` — 過去・予定のキャンプ記録一覧
-1. **キャンプ詳細** `/trips/[id]` — 持ち物プランニング＆チェックリスト
-1. **統計** `/statistics` — 持参回数ランキング、未使用ギア一覧（recharts）
+- `src/app/(auth)/` — 未認証ページ（ログイン）
+- `src/app/(app)/` — 認証必須ページ（gears, trips, statistics）
 
-## 開発ルール
+認証ガードは `src/app/(app)/layout.tsx` にある。`AuthContext` を参照し、未ログインの場合は `/login` にリダイレクトする。`AuthProvider` はルートレイアウトでアプリ全体を囲み、`SettingsProvider` は `(app)/layout.tsx` 内にのみ配置されている。
 
-### コーディング規約
+### フックのデータパターン
 
-- TypeScript strict mode を常に維持（`any` 禁止）
-- Firestoreアクセスは `src/lib/firestore/` に集約し、コンポーネントから直接叩かない
-- ドメインロジック（統計計算など）は `src/lib/utils/` に純粋関数として実装しテスト対象とする
+すべてのデータフック（`useGears`、`useTrips`、`useTripGears`、`useStatistics`）は「更新後に再取得」方式を採用している。ミューテーションのたびに共通の `load()` 関数を呼び出して Firestore からローカル状態を再取得する。`useTripGears` が最も複雑で、4つのコレクションを並列取得し、`unplannedGears`（まだ旅行に追加されていないギア）を派生値として公開する。
 
-### アプリ設定（SettingsContext）
+### 消耗品の在庫フロー
 
-- UI の表示設定は `src/contexts/SettingsContext.tsx` で管理し `useSettings()` フックで参照する
-- 設定は `localStorage` に永続化（キー: `campgear_settings`）
-- `SettingsProvider` は `(app)/layout.tsx` に配置（認証必須ページのみ適用）
-- 現在の設定項目: `showGearImages`（ギア画像サムネイルの表示 ON/OFF、デフォルト OFF）
+`usageCount`（持参回数）は Firestore に保存されず、`TripGear` ドキュメントを集計して算出する。`completeTrip()` が呼び出されると、`calcConsumedUnits()`（`src/lib/utils/statistics.ts`）が消耗品ごとの実際の使用数を計算し、Firestore の `Gear.stock` を減算する。その後、旅行の `status` が `'completed'` に更新される。
+
+### 統計関数 (`src/lib/utils/statistics.ts`)
+
+`Gear[]` と `TripGear[]` を引数に取る純粋関数群:
+- `calcGearUsageRanking` — 持参回数の降順でソート
+- `filterUnusedGears` — TripGear レコードがゼロのギアを返す
+- `calcConsumptionSuggestion` — 過去の平均消費比率に基づく日本語サジェスト文字列を返す。データがない場合は `null`
+
+## 規約
+
+### TypeScript
+
+`any` は禁止。strict モードを常に維持。`@` は `src/` へのパスエイリアス。
 
 ### 認証
 
-- `signInWithPopup` のみ使用
-- `signInWithRedirect` は使用禁止（iOS Safari の ITP で sessionStorage が消去されるため）
-- `onAuthStateChanged` でローディング状態を管理
-- **`initializeAuth` を使う場合は `browserPopupRedirectResolver` を必ず渡すこと**
-  `getAuth` はデフォルトで含めるが `initializeAuth` は含めないため、省略すると `signInWithPopup` が `auth/argument-error` で失敗する
+- `signInWithPopup`（Google OAuth）のみ使用。`signInWithRedirect` は iOS Safari の ITP で sessionStorage が消去されるため禁止。
+- `initializeAuth` には **必ず** `browserPopupRedirectResolver` を渡すこと。省略すると `signInWithPopup` が `auth/argument-error` で失敗する。`getAuth` はデフォルトで含むが `initializeAuth` は含まない。
+- Firestore は `ignoreUndefinedProperties: true` で初期化し、オプショナルフィールドを適切に扱う。
+
+### 設定
+
+UI の表示設定は `SettingsContext` で管理し（`localStorage` のキー `campgear_settings` に永続化）、`useSettings()` フックでアクセスする。現在の設定項目: `showGearImages`（デフォルト `false`）。
 
 ### テスト
 
-- ドメインロジック・ユーティリティ関数はユニットテストを必ず書く
-- コード変更後は必ず以下を実行してエラーがないことを確認してから納品すること:
-  
-  ```
-  npx tsc --noEmit
-  npm run test:run
-  npm run build
-  ```
+テストは `src/__tests__/` 以下に配置する。`src/__tests__/setup.ts` のグローバルセットアップで `next/navigation` と `@/lib/firebase` がすべてのテストでモック済み。テストフィクスチャの Firestore タイムスタンプには `{ toDate: () => new Date() } as Timestamp` を使用する。
 
-### Firebase設定
+ユニットテストはドメイン・ユーティリティ関数のみ必須。コンポーネントテストは任意。
 
-- 環境変数は `.env.local` で管理（`.env.example` をリポジトリに含める）
-- Firestoreセキュリティルール: 認証済みユーザーが自分のデータのみ読み書き可能
+## データモデル
 
-### デプロイ
+```
+gears/{gearId}       userId, name, category, isRequired, isConsumable, stock?, memo, imageUrl, createdAt
+trips/{tripId}       userId, name, date (YYYY-MM-DD), location?, memo, status ('planned'|'completed'), createdAt
+tripGears/{id}       userId, tripId, gearId, checked, quantity, quantityUsed, consumptionLevel?
+```
 
-- `main` ブランチへのマージで Vercel に自動デプロイ
-- GitHub Actions でCIを構成（tsc + test + build）
+`GearCategory`: `tent | furniture | kitchen | lighting | tools | apparel | other`
 
-## UI/UXの方針
+`ConsumptionLevel`: `little | half | most | all` — 1回のキャンプでの消耗品の部分的な使用感を表す。
 
-- モバイルファースト（iPhone での利用がメイン、PC でも使用）
-- next-pwa でPWA対応し、iPhoneホーム画面への追加を可能にする
-- キャンプ準備中でも直感的に操作できるシンプルなUI
-- ダークモード対応（アウトドアシーンでの視認性を考慮）
+カテゴリの表示ラベルは `src/lib/constants/categories.ts` にある。
 
-## 参考にした既存アプリ
+## 環境変数
 
-- GEAR STACK: コレクション管理・チェックリスト
-- GEARR: 使用履歴・重量管理・分析
-- geargear: パッキングリスト＋コミュニティ
-
-**自作アプリの差別化ポイント**:
-
-- 持参回数の可視化（既存アプリは弱い）
-- プランニングと過去履歴の紐付け
-- Webアプリ（PC＋iPhone両対応）
-- プライベート専用（SNS要素なし）
+`.env.example` を `.env.local` にコピーし、Firebase プロジェクトの値（`NEXT_PUBLIC_FIREBASE_*`）を記入する。ローカル開発に必要な環境変数はこれのみ。
